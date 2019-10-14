@@ -82,7 +82,9 @@ def convert(data_frame):
 
     # for each ab, create vectors and add to list
     print('creating vectors.')
-    for ab in abs:
+    for i, ab in enumerate(abs):
+        if i % (len(abs) // 10) == 0:
+            print(i // len(abs) * 100, '% done!')
         atbat = data_frame[data_frame['ab_id']==ab].reset_index()
         init_vec = atbat[init_cols].loc[0].to_numpy()
         seq_data = atbat[seq_cols].to_numpy()
