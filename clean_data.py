@@ -82,9 +82,10 @@ def convert(data_frame):
 
     # for each ab, create vectors and add to list
     print('creating vectors.')
+    abs_len = len(abs)
     for i, ab in enumerate(abs):
-        if i % (len(abs) // 10) == 0:
-            print(i // len(abs) * 100, '% done!')
+        if i % (abs_len // 100) == 0:
+            print(i / abs_len * 100, '% done!')
         atbat = data_frame[data_frame['ab_id']==ab].reset_index()
         init_vec = atbat[init_cols].loc[0].to_numpy()
         seq_data = atbat[seq_cols].to_numpy()
@@ -112,8 +113,8 @@ def store(inits, seqs, labels):
     init_vecs = 'inits.h5'
     init_file = h5py.File(init_vecs, 'w')
 
-    labels = 'labels.h5'
-    label_file = h5py.File(labels, 'w')
+    label_mats = 'labels.h5'
+    label_file = h5py.File(label_mats, 'w')
 
     # add data to h5 database
     pitch_file.create_dataset('pitch_seqs', data=seqs)
@@ -121,7 +122,7 @@ def store(inits, seqs, labels):
     label_file.create_dataset('label_vecs', data=labels)
 
     # check data in h5 databases
-    print(init_file,get('init_vecs')[0])
+    print(init_file.get('init_vecs')[0])
     print(pitch_file.get('pitch_seqs')[0])
     print(label_file.get('label_vecs')[0])
 
