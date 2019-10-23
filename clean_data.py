@@ -132,7 +132,7 @@ def main(atbats, pitches):
     pitch_data = load_transform_data(atbats, pitches)
     init, seq, label, length = convert(pitch_data)
     store(init, seq, label, length)
-    print('h5 datasets created (pitches.h5, inits.h5, labels.h5).')
+    print('h5 dataset created (baseball.h5)')
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
