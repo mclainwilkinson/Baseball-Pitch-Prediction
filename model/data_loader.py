@@ -5,23 +5,26 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 
 class PitchDataset(torch.utils.data.Dataset):
-    def __init__(self, inits, pitches, labels):
+    def __init__(self, data):
         super(PitchDataset, self).__init__()
-        self.init_vecs = h5py.File(inits).get('init_vecs')
-        self.pitch_seqs = h5py.File(pitches).get('pitch_seqs')
-        self.labels = h5py.File(labels).get('label_vecs')
+        h5_file = h5py.File(data)
+        self.init_vecs = h5_file.get('init_vecs')
+        self.pitch_seqs = h5_file.get('pitch_seqs')
+        self.labels = h5_file.get('label_vecs')
+        self.pitch_seq_lens = h5_file.get('seq_lens')
 
     def __getitem__(self, index):
         init_vec = torch.from_numpy(self.init_vecs[index]).float()
         pitch_seq = torch.from_numpy(self.pitch_seqs[index]).float()
         label = torch.from_numpy(self.labels[index]).float()
-        return init_vec, pitch_seq, label
+        seq_len = torch.from_numpy(self.pitch_seq_lens[index]).float()
+        return init_vec, pitch_seq, label, seq_len
 
     def __len__(self):
         return self.labels.shape[0]
 
 def split_dataset(dataset, batch, test_proportion, shuffle, r_seed):
-    data_size = length(dataset)
+    data_size = dataset.__len__()
     indices = list(range(data_size))
     split = int(np.floor(test_proportion * data_size))
     if shuffle:
