@@ -75,6 +75,7 @@ def convert(data_frame):
     init = []
     seq = []
     labels = []
+    lens = []
 
     # define seq and label shape to be of length 21
     seq_shape = (21, 5)
@@ -91,6 +92,7 @@ def convert(data_frame):
         seq_data = atbat[seq_cols].to_numpy()
         label_data = atbat[label_cols].to_numpy()
 
+        seq_len = seq_data.shape[0]
         seq_vecs = np.zeros(seq_shape)
         seq_vecs[:seq_data.shape[0],:5] = seq_data
 
@@ -100,41 +102,36 @@ def convert(data_frame):
         init.append(init_vec)
         seq.append(seq_vecs)
         labels.append(label_vecs)
+        lens.append(seq_len)
     print('vectors created.')
 
-    return np.array(init), np.array(seq), np.array(labels)
+    return np.array(init), np.array(seq), np.array(labels), np.array(seq_len)
 
-def store(inits, seqs, labels):
+def store(inits, seqs, labels, lens):
     # create h5 files for writing
-    print('writing h5 files.')
-    pitch_seq = 'pitches.h5'
-    pitch_file = h5py.File(pitch_seq, 'w')
-
-    init_vecs = 'inits.h5'
-    init_file = h5py.File(init_vecs, 'w')
-
-    label_mats = 'labels.h5'
-    label_file = h5py.File(label_mats, 'w')
+    print('writing h5 file.')
+    h5_file = 'baseball.h5'
+    bballDB = h5py.File(h5_file, 'w')
 
     # add data to h5 database
-    pitch_file.create_dataset('pitch_seqs', data=seqs)
-    init_file.create_dataset('init_vecs', data=inits)
-    label_file.create_dataset('label_vecs', data=labels)
+    bballDB.create_dataset('pitch_seqs', data=seqs)
+    bballDB.create_dataset('init_vecs', data=inits)
+    bballDB.create_dataset('label_vecs', data=labels)
+    bballDB.create_dataset('seq_lens', data = lens)
 
-    # check data in h5 databases
-    print(init_file.get('init_vecs')[0])
-    print(pitch_file.get('pitch_seqs')[0])
-    print(label_file.get('label_vecs')[0])
+    # check data in h5 database
+    print(bballDB.get('init_vecs')[0])
+    print(bballDB.get('pitch_seqs')[0])
+    print(bballDB.get('label_vecs')[0])
+    print(bballDB.get('seq_lens')[0])
 
-    # close files
-    init_file.close()
-    pitch_file.close()
-    label_file.close()
+    # close file
+    bballDB.close()
 
 def main(atbats, pitches):
     pitch_data = load_transform_data(atbats, pitches)
-    init, seq, label  = convert(pitch_data)
-    store(init, seq, label)
+    init, seq, label, length = convert(pitch_data)
+    store(init, seq, label, length)
     print('h5 datasets created (pitches.h5, inits.h5, labels.h5).')
 
 if __name__=="__main__":
