@@ -17,7 +17,7 @@ class PitchDataset(torch.utils.data.Dataset):
         init_vec = torch.from_numpy(self.init_vecs[index]).float()
         pitch_seq = torch.from_numpy(self.pitch_seqs[index]).float()
         seq_len = torch.from_numpy(self.pitch_seq_lens[index]).float()
-        label = torch.from_numpy(self.labels[index]).float()
+        label = torch.from_numpy(np.array(self.labels[index])).float()
         return init_vec, pitch_seq, seq_len, label
 
     def __len__(self):
