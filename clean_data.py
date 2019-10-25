@@ -105,7 +105,7 @@ def convert(data_frame):
         lens.append(seq_len)
     print('vectors created.')
 
-    return np.array(init), np.array(seq), np.array(labels), np.array(seq_len)
+    return np.array(init), np.array(seq), np.array(labels), np.array(lens)
 
 def store(inits, seqs, labels, lens):
     # create h5 files for writing
