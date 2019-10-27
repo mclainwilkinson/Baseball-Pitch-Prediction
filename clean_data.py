@@ -79,7 +79,7 @@ def convert(data_frame):
 
     # define seq and label shape to be of length 21
     seq_shape = (21, 5)
-    label_shape = (21, 3)
+    label_shape = (22, 3)
 
     # for each ab, create vectors and add to list
     print('creating vectors.')
@@ -94,7 +94,8 @@ def convert(data_frame):
 
         seq_len = seq_data.shape[0]
         seq_vecs = np.zeros(seq_shape)
-        seq_vecs[:seq_data.shape[0],:5] = seq_data
+        seq_vecs[:seq_data.shape[0]-1,:5] = seq_data[:-1,:]
+        seq_vecs = np.insert(seq_vecs, 0, 0, axis=0)
 
         label_vecs = np.zeros(label_shape)
         label_vecs[:label_data.shape[0],:3] = label_data
@@ -110,14 +111,14 @@ def convert(data_frame):
 def store(inits, seqs, labels, lens):
     # create h5 files for writing
     print('writing h5 file.')
-    h5_file = 'baseball.h5'
+    h5_file = 'baseball1.h5'
     bballDB = h5py.File(h5_file, 'w')
 
     # add data to h5 database
     bballDB.create_dataset('pitch_seqs', data=seqs)
     bballDB.create_dataset('init_vecs', data=inits)
     bballDB.create_dataset('label_vecs', data=labels)
-    bballDB.create_dataset('seq_lens', data = lens)
+    bballDB.create_dataset('seq_lens', data=lens)
 
     # check data in h5 database
     print(bballDB.get('init_vecs')[0])
@@ -132,7 +133,7 @@ def main(atbats, pitches):
     pitch_data = load_transform_data(atbats, pitches)
     init, seq, label, length = convert(pitch_data)
     store(init, seq, label, length)
-    print('h5 dataset created (baseball.h5)')
+    print('h5 dataset created (baseball1.h5)')
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
