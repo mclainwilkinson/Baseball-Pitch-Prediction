@@ -49,12 +49,19 @@ def load_transform_data(abs, pitches):
     df = df.dropna()
     df['simple_type'] = df['pitch_type'].apply(lambda x: pitch_conversions[x])
 
+    pitch_class = {
+        'F': 0,
+        'C': 1,
+        'B': 2
+    }
+
     # transform columns to usable format
     df['score_diff'] = df['p_score'] - df['b_score']
     df['p_R'] = (df['p_throws'] == 'R') * 1.0
     df['p_L'] = (df['p_throws'] == 'L') * 1.0
     df['b_R'] = (df['stand'] == 'R') * 1.0
     df['b_L'] = (df['stand'] == 'L') * 1.0
+    df['pitch_class'] = df['simple_type'].apply(lambda x: pitch_class[x])
     df['F'] = (df['simple_type'] == 'F') * 1.0
     df['C'] = (df['simple_type'] == 'C') * 1.0
     df['B'] = (df['simple_type'] == 'B') * 1.0
@@ -66,7 +73,7 @@ def convert(data_frame):
     init_cols = ['score_diff', 'inning', 'outs', 'p_R', 'p_L', 'b_R',
                 'b_L', 'on_1b', 'on_2b', 'on_3b']
     seq_cols = ['F', 'C', 'B', 'b_count', 's_count']
-    label_cols = ['F', 'C', 'B']
+    label_cols = 'pitch_class'
 
     # get ab_ids to loop through
     abs = data_frame['ab_id'].unique()
@@ -79,7 +86,7 @@ def convert(data_frame):
 
     # define seq and label shape to be of length 21
     seq_shape = (21, 5)
-    label_shape = (22, 3)
+    label_shape = (22,)
 
     # for each ab, create vectors and add to list
     print('creating vectors.')
@@ -97,8 +104,8 @@ def convert(data_frame):
         seq_vecs[:seq_data.shape[0]-1,:5] = seq_data[:-1,:]
         seq_vecs = np.insert(seq_vecs, 0, 0, axis=0)
 
-        label_vecs = np.zeros(label_shape)
-        label_vecs[:label_data.shape[0],:3] = label_data
+        label_vecs = np.full(label_shape, np.nan)
+        label_vecs[:len(label_data)] = label_data
 
         init.append(init_vec)
         seq.append(seq_vecs)
