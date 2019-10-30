@@ -16,7 +16,7 @@ else:
 # get data from h5 dataset
 data_file = 'baseball1.h5'
 data = PitchDataset(data_file)
-batch_size = 5
+batch_size = 50
 num_seqs = data.__len__()
 train_loader, test_loader = split_dataset(data, batch_size, 0.3, True, 68)
 print('training and testing datasets loaded')
@@ -34,21 +34,19 @@ optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
 # calculate loss
 def format_outputs(output, label, seq_len):
-    '''
-    Need data to be in (num_pitches_in_batch, 3) for outputs
-    (num_pitches_in_batch) for targets
-    '''
-    outputs = torch.zeros((5, 22, 3))
-    labels = torch.zeros((5, 22, 3))
-    evals = enumerate(zip(out, label, seq_len))
-    for b, e in evals:
-        outputs[b,:e[2].item(),:] = e[0][:e[2].item(),:]
-        labels[b,:e[2].item(),:] = e[1][:e[2].item(),:]
-    return torch.transpose(outputs, 1, 2), torch.transpose(labels, 1, 2).long()
+    os = []
+    ls = []
+    for o, l, s in zip(output, label, seq_len):
+        os.append(o[:s.item(),:])
+        ls.append(l[:s.item()])
+    return torch.cat(os, 0), torch.cat(ls, 0).long()
 
+# keep track of loss
+loss_list = []
 
 # train the model
 for epoch in range(num_epochs):
+    avg_loss = []
     for i, (init, pitch, seq_len, label) in enumerate(train_loader):
         inits = Variable(init).to(device)
         pitches = Variable(pitch).to(device)
@@ -63,8 +61,16 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
+        avg_loss.append(loss.item())
+
         if (i + 1) % 100 == 0:
             print('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f'
                   % (epoch + 1, num_epochs, i + 1, num_seqs // batch_size, loss.item()))
+
+    loss_list.append(np.mean(avg_loss))
+
+print('training complete. Progression of loss is as follows:')
+for i, l in enumerate(loss_list):
+    print('epoch', i, ':', l)
 
 torch.save(model.state_dict(), 'pitchpred.pkl')
