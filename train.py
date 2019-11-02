@@ -15,7 +15,7 @@ else:
     print('GPU not available, using CPU')
 
 # get data from h5 dataset
-data_file = 'baseball1.h5'
+data_file = 'baseballScaled.h5'
 data = PitchDataset(data_file)
 batch_size = 50
 train_split = 0.7
@@ -101,6 +101,7 @@ for init, pitch, seq_len, label in test_loader:
     totals += labs.cpu().size(0)
     corrects += (preds.cpu() == labs.cpu()).sum()
 
+# print results
 print('the results are in.')
 print(corrects, '/', totals)
 print('or...', '%.2f' % (corrects / totals))

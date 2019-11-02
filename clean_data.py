@@ -1,6 +1,7 @@
 import pandas as pd
 import h5py
 import numpy as np
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import argparse
 
 '''
@@ -55,8 +56,12 @@ def load_transform_data(abs, pitches):
         'B': 2
     }
 
-    # transform columns to usable format
+    # transform columns to usable format and scale values
     df['score_diff'] = df['p_score'] - df['b_score']
+    score_scaler = StandardScaler()
+    df['score_diff'] = score_scaler.fit_transform(df['score_diff'].values.reshape(-1, 1))
+    inning_scaler = MinMaxScaler()
+    df['inning'] = inning_scaler.fit_transform(df['inning'].values.reshape(-1, 1))
     df['p_R'] = (df['p_throws'] == 'R') * 1.0
     df['p_L'] = (df['p_throws'] == 'L') * 1.0
     df['b_R'] = (df['stand'] == 'R') * 1.0
@@ -118,7 +123,7 @@ def convert(data_frame):
 def store(inits, seqs, labels, lens):
     # create h5 files for writing
     print('writing h5 file.')
-    h5_file = 'baseball1.h5'
+    h5_file = 'baseballScaled.h5'
     bballDB = h5py.File(h5_file, 'w')
 
     # add data to h5 database
@@ -140,7 +145,7 @@ def main(atbats, pitches):
     pitch_data = load_transform_data(atbats, pitches)
     init, seq, label, length = convert(pitch_data)
     store(init, seq, label, length)
-    print('h5 dataset created (baseball1.h5)')
+    print('h5 dataset created (baseballScaled.h5)')
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
