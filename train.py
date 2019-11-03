@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
+import pandas as pd
 from model.net import PitchRNN
 from model.data_loader import PitchDataset, split_dataset
 
@@ -17,23 +18,23 @@ else:
 # get data from h5 dataset
 data_file = 'baseballScaled.h5'
 data = PitchDataset(data_file)
-batch_size = 50
+batch_size = 25
 train_split = 0.7
 train_loader, test_loader = split_dataset(data, batch_size, 1 - train_split, True, 68)
 num_seqs = data.__len__() * train_split
-print('training and testing datasets loaded.')
+print('training and testing datasets loaded. Batch size: %d train/test split: %.f' % (batch_size, train_split))
 print('training on %d pitch sequences.' % (num_seqs))
 
 # define the model
 model = PitchRNN(input_size=5, output_size=3, hidden_dim=8, n_layers=3, init_dim=10)
 model.to(device)
+print('model loaded')
 
 # set training parameters and define loss
 num_epochs = 1
 lr = 0.001
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
 
 # calculate loss
 def format_outputs(output, label, seq_len):
@@ -48,6 +49,7 @@ def format_outputs(output, label, seq_len):
 loss_list = []
 
 # train the model
+print('beginning training')
 for epoch in range(num_epochs):
     avg_loss = []
     for i, (init, pitch, seq_len, label) in enumerate(train_loader):
@@ -74,7 +76,7 @@ for epoch in range(num_epochs):
 
 print('training complete. Progression of loss is as follows:')
 for i, l in enumerate(loss_list):
-    print('epoch', i, ':', l)
+    print('epoch', i + 1, ':', '%.2f' % l)
 
 torch.save(model.state_dict(), 'pitchpred.pkl')
 print('model saved to pitchpred.pkl')
@@ -85,10 +87,10 @@ print('begin testing model')
 num_test_seqs = data.__len__() * (1 - train_split)
 print('testing on %d pitch sequences from test set' % (num_test_seqs))
 
-# create stats to store
-totals = 0
-corrects = 0
+# create confusion dict to store predictions
+confusion = {0:[0, 0, 0], 1:[0, 0, 0], 2:[0, 0, 0]}
 
+# get results
 for init, pitch, seq_len, label in test_loader:
     inits = Variable(init).to(device)
     pitches = Variable(pitch).to(device)
@@ -98,13 +100,31 @@ for init, pitch, seq_len, label in test_loader:
     out, hidden = model(inits, pitches, seq_lens)
     outs, labs = format_outputs(out, labels, seq_lens)
     preds = torch.argmax(outs, dim=1)
-    totals += labs.cpu().size(0)
-    corrects += (preds.cpu() == labs.cpu()).sum()
+
+    for p, l in zip(preds.cpu(), labs.cpu()):
+        confusion[int(l)][int(p)] += 1
+        # keys/cols are actual, vals/rows are pred
+        # 0->F, 1->C, 2->B
+
+# calculate stats
+totals = [sum(confusion[p]) for p in confusion]
+corrects = [confusion[p][p] for p in confusion]
+overall_accuracy = sum(corrects) / sum(totals)
+individual_accuracy = [c / t for c, t in zip(corrects, totals)]
+
+# write results to pandas df and csv file
+confusion = pd.DataFrame.from_dict(confusion)
+confusion.columns = ['Fastball (actual)', 'Change Up (actual)', 'Breaking Ball (actual)']
+confusion.index = ['Fastball (pred)', 'Change Up (pred)', 'Breaking Ball (pred)']
+confusion.to_csv('confusion.csv', index=False)
 
 # print results
 print('the results are in.')
-print(corrects, '/', totals)
-print('or...', '%.2f' % (corrects / totals))
-print('you\'re batting %.2f !!!!!' % (corrects / totals))
+print('you\'re batting %.2f !!!!!' % (overall_accuracy))
+print('individual accuracies:')
+for l, a in zip(['fastball', 'change up', 'breaking ball'], individual_accuracy):
+    print(l, '%.2f' % (a))
+print('confusion matrix:')
+print(confusion)
 print('thanks for swinging!')
 print('goodbye.')
