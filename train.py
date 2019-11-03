@@ -18,11 +18,11 @@ else:
 # get data from h5 dataset
 data_file = 'baseballScaled.h5'
 data = PitchDataset(data_file)
-batch_size = 25
+batch_size = 20
 train_split = 0.7
 train_loader, test_loader = split_dataset(data, batch_size, 1 - train_split, True, 68)
 num_seqs = data.__len__() * train_split
-print('training and testing datasets loaded. Batch size: %d train/test split: %.f' % (batch_size, train_split))
+print('training and testing datasets loaded. Batch size: %d train/test split: %.2f' % (batch_size, train_split))
 print('training on %d pitch sequences.' % (num_seqs))
 
 # define the model
@@ -31,8 +31,8 @@ model.to(device)
 print('model loaded')
 
 # set training parameters and define loss
-num_epochs = 1
-lr = 0.001
+num_epochs = 25
+lr = 0.0001
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -76,7 +76,7 @@ for epoch in range(num_epochs):
 
 print('training complete. Progression of loss is as follows:')
 for i, l in enumerate(loss_list):
-    print('epoch', i + 1, ':', '%.2f' % l)
+    print('epoch', i + 1, ':', '%.3f' % l)
 
 torch.save(model.state_dict(), 'pitchpred.pkl')
 print('model saved to pitchpred.pkl')
@@ -119,11 +119,11 @@ confusion.index = ['Fastball (pred)', 'Change Up (pred)', 'Breaking Ball (pred)'
 confusion.to_csv('confusion.csv', index=False)
 
 # print results
-print('the results are in.')
-print('you\'re batting %.2f !!!!!' % (overall_accuracy))
+print('the results are in...')
+print('you\'re batting %.3f !!!!!' % (overall_accuracy))
 print('individual accuracies:')
 for l, a in zip(['fastball', 'change up', 'breaking ball'], individual_accuracy):
-    print(l, '%.2f' % (a))
+    print(l, '%.2f' % (a * 100.0), '%')
 print('confusion matrix:')
 print(confusion)
 print('thanks for swinging!')
