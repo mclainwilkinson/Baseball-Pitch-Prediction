@@ -16,4 +16,9 @@ Train and save them model using various changes to the dataset and network archi
 * train_seq.py for training on full dataset with initial at bat info being provided in every vector of pitch sequence
 * train_scherzer.py for training and predicting pitches in at bats thrown by pitcher Max Scherzer ONLY  
 
+Requirements to run training files:  
+* Python 3.6
+* Pytorch 1.1
+* h5py
+
 Results figures and scores are created and found in resultsAnalysis.ipynb file in results folder.
